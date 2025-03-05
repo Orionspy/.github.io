@@ -6,9 +6,6 @@ canvas.height = 600;
 
 // Variables globales
 const CELL_SIZE = 40;
-const ARROW_SIZE = 80;
-const ARROW_MARGIN = 20;
-const BLUR_PADDING = 10;
 let playerX = CELL_SIZE;
 let playerY = CELL_SIZE;
 let level = 1;
@@ -16,32 +13,12 @@ let maze = [];
 let exitX, exitY;
 let isGameOver = false;
 
-// Rectangles des flèches
-let arrowRects = {
-    up: null,
-    down: null,
-    left: null,
-    right: null
-};
-
 // Chargement des images
 const viceputImg = new Image();
 viceputImg.src = "https://i.ibb.co/Mk1t05xp/Viceput.png";
 
 const tanabladeImg = new Image();
 tanabladeImg.src = "https://i.ibb.co/5XgY59S0/Tanablade.png";
-
-const arrowUpImg = new Image();
-arrowUpImg.src = "https://i.ibb.co/MxXRKf9j/en-avant.png";
-
-const arrowDownImg = new Image();
-arrowDownImg.src = "https://i.ibb.co/N8j1rSJ/en-bas.png";
-
-const arrowRightImg = new Image();
-arrowRightImg.src = "https://i.ibb.co/Z1RvWLJm/droite.png";
-
-const arrowLeftImg = new Image();
-arrowLeftImg.src = "https://i.ibb.co/CDYdqHQ/gauche.png";
 
 const playerImg = () => (level === 1 ? viceputImg : tanabladeImg);
 
@@ -53,9 +30,7 @@ function generateMaze(cols, rows) {
 
     while (stack.length > 0) {
         const [x, y] = stack[stack.length - 1];
-        const directions = [
-            [0, -2], [2, 0], [0, 2], [-2, 0]
-        ].sort(() => Math.random() - 0.5);
+        const directions = [[0, -2], [2, 0], [0, 2], [-2, 0]].sort(() => Math.random() - 0.5);
 
         let moved = false;
 
@@ -119,58 +94,18 @@ function drawExit() {
 
 // Dessiner le joueur
 function drawPlayer() {
-    ctx.drawImage(playerImg(), playerX, playerY, CELL_SIZE / 1.5, CELL_SIZE / 1.5);
-}
-
-// Fonction pour dessiner un rectangle flou
-function drawBlurredRect(x, y, width, height) {
-    ctx.save();
-    ctx.filter = 'blur(5px)';
-    ctx.fillStyle = 'rgba(200, 200, 200, 0.5)';
-    ctx.fillRect(x, y, width, height);
-    ctx.restore();
-}
-
-// Fonction pour dessiner les flèches
-function drawArrows() {
-    const arrowsWidth = ARROW_SIZE * 3 + ARROW_MARGIN * 2;
-    const arrowsHeight = ARROW_SIZE * 3 + ARROW_MARGIN * 2;
-    const startX = canvas.width - arrowsWidth - ARROW_MARGIN;
-    const startY = canvas.height - arrowsHeight - ARROW_MARGIN;
-
-    drawBlurredRect(
-        startX - BLUR_PADDING, 
-        startY - BLUR_PADDING, 
-        arrowsWidth + BLUR_PADDING * 2, 
-        arrowsHeight + BLUR_PADDING * 2
-    );
-
-    arrowRects.up = {x: startX + ARROW_SIZE + ARROW_MARGIN, y: startY, width: ARROW_SIZE, height: ARROW_SIZE};
-    arrowRects.down = {x: startX + ARROW_SIZE + ARROW_MARGIN, y: startY + ARROW_SIZE * 2 + ARROW_MARGIN, width: ARROW_SIZE, height: ARROW_SIZE};
-    arrowRects.left = {x: startX, y: startY + ARROW_SIZE + ARROW_MARGIN, width: ARROW_SIZE, height: ARROW_SIZE};
-    arrowRects.right = {x: startX + ARROW_SIZE * 2 + ARROW_MARGIN * 2, y: startY + ARROW_SIZE + ARROW_MARGIN, width: ARROW_SIZE, height: ARROW_SIZE};
-
-    ctx.drawImage(arrowUpImg, arrowRects.up.x, arrowRects.up.y, ARROW_SIZE, ARROW_SIZE);
-    ctx.drawImage(arrowDownImg, arrowRects.down.x, arrowRects.down.y, ARROW_SIZE, ARROW_SIZE);
-    ctx.drawImage(arrowLeftImg, arrowRects.left.x, arrowRects.left.y, ARROW_SIZE, ARROW_SIZE);
-    ctx.drawImage(arrowRightImg, arrowRects.right.x, arrowRects.right.y, ARROW_SIZE, ARROW_SIZE);
+    ctx.drawImage(playerImg(), playerX, playerY, CELL_SIZE, CELL_SIZE);
 }
 
 // Déplacement du joueur
 function movePlayer(dx, dy) {
-    const newX = playerX + dx * CELL_SIZE / 4;
-    const newY = playerY + dy * CELL_SIZE / 4;
+    const newX = playerX + dx * CELL_SIZE;
+    const newY = playerY + dy * CELL_SIZE;
 
     const cellX = Math.floor(newX / CELL_SIZE);
     const cellY = Math.floor(newY / CELL_SIZE);
 
-    if (
-        cellX >= 0 &&
-        cellY >= 0 &&
-        cellX < maze[0].length &&
-        cellY < maze.length &&
-        maze[cellY][cellX] === 0
-    ) {
+    if (cellX >= 0 && cellY >= 0 && cellX < maze[0].length && cellY < maze.length && maze[cellY][cellX] === 0) {
         playerX = newX;
         playerY = newY;
 
@@ -205,59 +140,20 @@ function nextLevel() {
 window.addEventListener("keydown", (e) => {
     if (!isGameOver) {
         switch (e.key) {
-            case "ArrowUp":
-                movePlayer(0, -1);
-                break;
-            case "ArrowDown":
-                movePlayer(0, 1);
-                break;
-            case "ArrowLeft":
-                movePlayer(-1, 0);
-                break;
-            case "ArrowRight":
-                movePlayer(1, 0);
-                break;
+            case "ArrowUp": movePlayer(0, -1); break;
+            case "ArrowDown": movePlayer(0, 1); break;
+            case "ArrowLeft": movePlayer(-1, 0); break;
+            case "ArrowRight": movePlayer(1, 0); break;
         }
     }
 });
 
-// Gestion des clics sur le canvas
-function handleCanvasClick(event) {
-    if (isGameOver) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-
-    if (isPointInRect(x, y, arrowRects.up)) {
-        movePlayer(0, -1);
-    } else if (isPointInRect(x, y, arrowRects.down)) {
-        movePlayer(0, 1);
-    } else if (isPointInRect(x, y, arrowRects.left)) {
-        movePlayer(-1, 0);
-    } else if (isPointInRect(x, y, arrowRects.right)) {
-        movePlayer(1, 0);
-    }
-}
-
-// Fonction utilitaire pour vérifier si un point est dans un rectangle
-function isPointInRect(x, y, rect) {
-    return x >= rect.x && x <= rect.x + rect.width &&
-           y >= rect.y && y <= rect.y + rect.height;
-}
-
-// Ajout de l'écouteur d'événements pour les clics sur le canvas
-canvas.addEventListener('click', handleCanvasClick);
-
 // Boucle de jeu principale
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     drawMaze();
     drawExit();
     drawPlayer();
-    drawArrows();
-
     requestAnimationFrame(gameLoop);
 }
 

@@ -6,11 +6,14 @@ canvas.height = 600;
 
 // Variables globales
 const CELL_SIZE = 40;
-let playerX = CELL_SIZE; // Position initiale du joueur
+const ARROW_SIZE = 80;
+const ARROW_MARGIN = 20;
+const BLUR_PADDING = 10;
+let playerX = CELL_SIZE;
 let playerY = CELL_SIZE;
-let level = 1; // Niveau actuel
+let level = 1;
 let maze = [];
-let exitX, exitY; // Position de la sortie
+let exitX, exitY;
 let isGameOver = false;
 
 // Chargement des images
@@ -19,6 +22,18 @@ viceputImg.src = "https://i.ibb.co/Mk1t05xp/Viceput.png";
 
 const tanabladeImg = new Image();
 tanabladeImg.src = "https://i.ibb.co/5XgY59S0/Tanablade.png";
+
+const arrowUpImg = new Image();
+arrowUpImg.src = "https://i.ibb.co/MxXRKf9j/en-avant.png";
+
+const arrowDownImg = new Image();
+arrowDownImg.src = "https://i.ibb.co/N8j1rSJ/en-bas.png";
+
+const arrowRightImg = new Image();
+arrowRightImg.src = "https://i.ibb.co/Z1RvWLJm/droite.png";
+
+const arrowLeftImg = new Image();
+arrowLeftImg.src = "https://i.ibb.co/CDYdqHQ/gauche.png";
 
 const playerImg = () => (level === 1 ? viceputImg : tanabladeImg);
 
@@ -31,10 +46,7 @@ function generateMaze(cols, rows) {
     while (stack.length > 0) {
         const [x, y] = stack[stack.length - 1];
         const directions = [
-            [0, -2], // Haut
-            [2, 0], // Droite
-            [0, 2], // Bas
-            [-2, 0], // Gauche
+            [0, -2], [2, 0], [0, 2], [-2, 0]
         ].sort(() => Math.random() - 0.5);
 
         let moved = false;
@@ -45,7 +57,7 @@ function generateMaze(cols, rows) {
 
             if (nx > 0 && ny > 0 && nx < cols - 1 && ny < rows - 1 && maze[ny][nx] === 1) {
                 maze[ny][nx] = 0;
-                maze[y + dy / 2][x + dx / 2] = 0; // Ouvre le mur entre les cellules
+                maze[y + dy / 2][x + dx / 2] = 0;
                 stack.push([nx, ny]);
                 moved = true;
                 break;
@@ -55,7 +67,6 @@ function generateMaze(cols, rows) {
         if (!moved) stack.pop();
     }
 
-    // Ajouter des impasses pour le niveau difficile (niveau 2)
     if (level === 2) {
         for (let i = 0; i < cols * rows * 0.1; i++) {
             const rx = Math.floor(Math.random() * cols);
@@ -103,6 +114,35 @@ function drawPlayer() {
     ctx.drawImage(playerImg(), playerX, playerY, CELL_SIZE / 1.5, CELL_SIZE / 1.5);
 }
 
+// Fonction pour dessiner un rectangle flou
+function drawBlurredRect(x, y, width, height) {
+    ctx.save();
+    ctx.filter = 'blur(5px)';
+    ctx.fillStyle = 'rgba(200, 200, 200, 0.5)';
+    ctx.fillRect(x, y, width, height);
+    ctx.restore();
+}
+
+// Fonction pour dessiner les flèches
+function drawArrows() {
+    const arrowsWidth = ARROW_SIZE * 3 + ARROW_MARGIN * 2;
+    const arrowsHeight = ARROW_SIZE * 3 + ARROW_MARGIN * 2;
+    const startX = canvas.width - arrowsWidth - ARROW_MARGIN;
+    const startY = canvas.height - arrowsHeight - ARROW_MARGIN;
+
+    drawBlurredRect(
+        startX - BLUR_PADDING, 
+        startY - BLUR_PADDING, 
+        arrowsWidth + BLUR_PADDING * 2, 
+        arrowsHeight + BLUR_PADDING * 2
+    );
+
+    ctx.drawImage(arrowUpImg, startX + ARROW_SIZE + ARROW_MARGIN, startY, ARROW_SIZE, ARROW_SIZE);
+    ctx.drawImage(arrowDownImg, startX + ARROW_SIZE + ARROW_MARGIN, startY + ARROW_SIZE * 2 + ARROW_MARGIN, ARROW_SIZE, ARROW_SIZE);
+    ctx.drawImage(arrowLeftImg, startX, startY + ARROW_SIZE + ARROW_MARGIN, ARROW_SIZE, ARROW_SIZE);
+    ctx.drawImage(arrowRightImg, startX + ARROW_SIZE * 2 + ARROW_MARGIN * 2, startY + ARROW_SIZE + ARROW_MARGIN, ARROW_SIZE, ARROW_SIZE);
+}
+
 // Déplacement du joueur
 function movePlayer(dx, dy) {
     const newX = playerX + dx * CELL_SIZE / 4;
@@ -118,10 +158,9 @@ function movePlayer(dx, dy) {
         cellY < maze.length &&
         maze[cellY][cellX] === 0
     ) {
-        playerX += dx * CELL_SIZE / 4;
-        playerY += dy * CELL_SIZE / 4;
+        playerX = newX;
+        playerY = newY;
 
-        // Vérifier si le joueur atteint la sortie
         if (cellX === exitX && cellY === exitY) {
             isGameOver = true;
             setTimeout(() => nextLevel(), 500);
@@ -132,8 +171,16 @@ function movePlayer(dx, dy) {
 // Passer au niveau suivant ou terminer le jeu
 function nextLevel() {
     if (level === 2) {
-        alert("Bravo ! Vous avez terminé le jeu !");
-        document.location.reload();
+        fetch('config.json')
+            .then(response => response.json())
+            .then(data => {
+                window.location.href = data.endGameLink;
+            })
+            .catch(error => {
+                console.error('Erreur lors du chargement du lien:', error);
+                alert("Bravo ! Vous avez terminé le jeu !");
+                document.location.reload();
+            });
     } else {
         level++;
         initLevel();
@@ -168,6 +215,7 @@ function gameLoop() {
     drawMaze();
     drawExit();
     drawPlayer();
+    drawArrows();
 
     requestAnimationFrame(gameLoop);
 }

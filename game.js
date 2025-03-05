@@ -16,6 +16,14 @@ let maze = [];
 let exitX, exitY;
 let isGameOver = false;
 
+// Rectangles des flèches
+let arrowRects = {
+    up: null,
+    down: null,
+    left: null,
+    right: null
+};
+
 // Chargement des images
 const viceputImg = new Image();
 viceputImg.src = "https://i.ibb.co/Mk1t05xp/Viceput.png";
@@ -137,10 +145,15 @@ function drawArrows() {
         arrowsHeight + BLUR_PADDING * 2
     );
 
-    ctx.drawImage(arrowUpImg, startX + ARROW_SIZE + ARROW_MARGIN, startY, ARROW_SIZE, ARROW_SIZE);
-    ctx.drawImage(arrowDownImg, startX + ARROW_SIZE + ARROW_MARGIN, startY + ARROW_SIZE * 2 + ARROW_MARGIN, ARROW_SIZE, ARROW_SIZE);
-    ctx.drawImage(arrowLeftImg, startX, startY + ARROW_SIZE + ARROW_MARGIN, ARROW_SIZE, ARROW_SIZE);
-    ctx.drawImage(arrowRightImg, startX + ARROW_SIZE * 2 + ARROW_MARGIN * 2, startY + ARROW_SIZE + ARROW_MARGIN, ARROW_SIZE, ARROW_SIZE);
+    arrowRects.up = {x: startX + ARROW_SIZE + ARROW_MARGIN, y: startY, width: ARROW_SIZE, height: ARROW_SIZE};
+    arrowRects.down = {x: startX + ARROW_SIZE + ARROW_MARGIN, y: startY + ARROW_SIZE * 2 + ARROW_MARGIN, width: ARROW_SIZE, height: ARROW_SIZE};
+    arrowRects.left = {x: startX, y: startY + ARROW_SIZE + ARROW_MARGIN, width: ARROW_SIZE, height: ARROW_SIZE};
+    arrowRects.right = {x: startX + ARROW_SIZE * 2 + ARROW_MARGIN * 2, y: startY + ARROW_SIZE + ARROW_MARGIN, width: ARROW_SIZE, height: ARROW_SIZE};
+
+    ctx.drawImage(arrowUpImg, arrowRects.up.x, arrowRects.up.y, ARROW_SIZE, ARROW_SIZE);
+    ctx.drawImage(arrowDownImg, arrowRects.down.x, arrowRects.down.y, ARROW_SIZE, ARROW_SIZE);
+    ctx.drawImage(arrowLeftImg, arrowRects.left.x, arrowRects.left.y, ARROW_SIZE, ARROW_SIZE);
+    ctx.drawImage(arrowRightImg, arrowRects.right.x, arrowRects.right.y, ARROW_SIZE, ARROW_SIZE);
 }
 
 // Déplacement du joueur
@@ -207,6 +220,34 @@ window.addEventListener("keydown", (e) => {
         }
     }
 });
+
+// Gestion des clics sur le canvas
+function handleCanvasClick(event) {
+    if (isGameOver) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    if (isPointInRect(x, y, arrowRects.up)) {
+        movePlayer(0, -1);
+    } else if (isPointInRect(x, y, arrowRects.down)) {
+        movePlayer(0, 1);
+    } else if (isPointInRect(x, y, arrowRects.left)) {
+        movePlayer(-1, 0);
+    } else if (isPointInRect(x, y, arrowRects.right)) {
+        movePlayer(1, 0);
+    }
+}
+
+// Fonction utilitaire pour vérifier si un point est dans un rectangle
+function isPointInRect(x, y, rect) {
+    return x >= rect.x && x <= rect.x + rect.width &&
+           y >= rect.y && y <= rect.y + rect.height;
+}
+
+// Ajout de l'écouteur d'événements pour les clics sur le canvas
+canvas.addEventListener('click', handleCanvasClick);
 
 // Boucle de jeu principale
 function gameLoop() {

@@ -148,6 +148,14 @@ window.addEventListener("keydown", (e) => {
     }
 });
 
+
+// Gestion des contrôles mobiles
+document.getElementById('up').addEventListener('click', () => movePlayer(0, -1));
+document.getElementById('down').addEventListener('click', () => movePlayer(0, 1));
+document.getElementById('left').addEventListener('click', () => movePlayer(-1, 0));
+document.getElementById('right').addEventListener('click', () => movePlayer(1, 0));
+
+
 // Boucle de jeu principale
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);

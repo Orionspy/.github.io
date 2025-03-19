@@ -1,52 +1,139 @@
 <!DOCTYPE html>
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Labyrinthe</title>
+    <title>Labyrinthe à 2 Niveaux</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
         canvas {
-            display: block;
-            background-color: white;
+            border: 1px solid black;
         }
-        <div id="mobile-controls">
-            <button id="up">↑</button>
-            <button id="left">←</button>
-            <button id="right">→</button>
-            <button id="down">↓</button>
-        </div>
-
-        <style>
-        #mobile-controls {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+        .controls {
+            margin-top: 10px;
         }
-        #mobile-controls button {
-            width: 50px;
-            height: 50px;
-            font-size: 24px;
+        button {
+            padding: 10px;
+            font-size: 16px;
             margin: 5px;
         }
-        @media (max-width: 768px) {
-            #mobile-controls {
-                display: block;
-            }
-        }
-    </style>
-
-
-            
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
-    <script src="game.js"></script>
+    <canvas id="mazeCanvas" width="400" height="400"></canvas>
+    <div class="controls">
+        <button onclick="movePlayer('up')">Haut</button><br>
+        <button onclick="movePlayer('left')">Gauche</button>
+        <button onclick="movePlayer('right')">Droite</button><br>
+        <button onclick="movePlayer('down')">Bas</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+        const tileSize = 40;
+
+        // Niveau 1
+        const level1 = [
+            [2, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 1, 0, 1, 0, 0, 1],
+            [1, 1, 1, 0, 1, 0, 1, 0, 1, 1],
+            [1, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
+            [1, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 0, 1, 1, 1, 1, 0, 1],
+            [1, 0, 1, 0, 1, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 1, 0, 1, 1, 0, 3],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ];
+
+        // Niveau 2
+        const level2 = [
+            [2, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 0, 0, 0, 0, 1, 0, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 0, 1, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
+            [1, 1, 1, 0, 1, 1, 1, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 1, 0, 1, 1],
+            [1, 0, 1, 1, 1, 0, 1, 0, 1, 1],
+            [1, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+            [1, 0, 0, 0, 1, 1, 1, 1, 0, 3],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ];
+
+        let currentLevel = level1; // Niveau actuel
+        let levelNumber = 1;
+        let player = { x: 0, y: 0 }; // Position initiale
+
+        // Dessiner le labyrinthe
+        function drawMaze() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let y = 0; y < currentLevel.length; y++) {
+                for (let x = 0; x < currentLevel[y].length; x++) {
+                    if (currentLevel[y][x] === 1) {
+                        ctx.fillStyle = 'black'; // Mur
+                        ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                    } else if (currentLevel[y][x] === 2) {
+                        ctx.fillStyle = 'green'; // Départ
+                        ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                    } else if (currentLevel[y][x] === 3) {
+                        ctx.fillStyle = 'red'; // Sortie
+                        ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                    }
+                }
+            }
+            // Dessiner le joueur
+            ctx.fillStyle = 'blue';
+            ctx.beginPath();
+            ctx.arc(player.x * tileSize + tileSize / 2, player.y * tileSize + tileSize / 2, tileSize / 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Déplacer le joueur
+        function movePlayer(direction) {
+            let newX = player.x;
+            let newY = player.y;
+
+            if (direction === 'up') newY--;
+            if (direction === 'down') newY++;
+            if (direction === 'left') newX--;
+            if (direction === 'right') newX++;
+
+            // Vérifier les limites et les murs
+            if (newX >= 0 && newX < currentLevel[0].length && newY >= 0 && newY < currentLevel.length && currentLevel[newY][newX] !== 1) {
+                player.x = newX;
+                player.y = newY;
+                drawMaze();
+
+                // Vérifier si le joueur atteint la sortie
+                if (currentLevel[player.y][player.x] === 3) {
+                    if (levelNumber === 1) {
+                        // Passer au niveau 2
+                        levelNumber = 2;
+                        currentLevel = level2;
+                        player = { x: 0, y: 0 }; // Réinitialiser la position
+                        alert('Niveau 1 terminé ! Bienvenue au niveau 2.');
+                        drawMaze();
+                    } else if (levelNumber === 2) {
+                        // Fin du niveau 2, redirection
+                        alert('Félicitations, vous avez terminé le niveau 2 ! Redirection...');
+                        window.location.href = 'https://www.x.ai'; // Lien au pif
+                    }
+                }
+            }
+        }
+
+        // Gestion des touches fléchées (PC)
+        document.addEventListener('keydown', (event) => {
+            switch (event.key) {
+                case 'ArrowUp': movePlayer('up'); break;
+                case 'ArrowDown': movePlayer('down'); break;
+                case 'ArrowLeft': movePlayer('left'); break;
+                case 'ArrowRight': movePlayer('right'); break;
+            }
+        });
+
+        // Initialiser le labyrinthe
+        drawMaze();
+    </script>
 </body>
 </html>

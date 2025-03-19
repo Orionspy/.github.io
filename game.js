@@ -14,13 +14,13 @@ let exitX, exitY;
 let isGameOver = false;
 
 // Chargement des images
-const viceputImg = new Image();
-viceputImg.src = "https://i.ibb.co/Mk1t05xp/Viceput.png";
+const perso1 = new Image();
+perso1.src = "https://i.ibb.co/Mk1t05xp/Viceput.png";
 
-const tanabladeImg = new Image();
-tanabladeImg.src = "https://i.ibb.co/5XgY59S0/Tanablade.png";
+const perso2 = new Image();
+perso2.src = "https://i.ibb.co/5XgY59S0/Tanablade.png";
 
-const playerImg = () => (level === 1 ? viceputImg : tanabladeImg);
+const playerImg = () => (level === 1 ? perso1 : perso2);
 
 // Génération du labyrinthe
 function generateMaze(cols, rows) {
